@@ -50,15 +50,14 @@ function Get-TargetResource
         $ServerRoleName
     )
 
-    $sqlServerObject = Connect-SQL -ServerName $ServerName -InstanceName $InstanceName -ErrorAction 'Stop'
+    $sqlServerObject = Connect-SQL -ServerName $ServerName -InstanceName $InstanceName -ErrorAction 'SilentlyContinue'
     $ensure = 'Absent'
     $membersInRole = $null
 
     if ($sqlServerObject)
     {
         Write-Verbose -Message (
-            $script:localizedData.GetProperties `
-                -f $ServerRoleName
+            $script:localizedData.GetProperties -f $ServerRoleName
         )
 
         if ($sqlServerRoleObject = $sqlServerObject.Roles[$ServerRoleName])
@@ -70,10 +69,8 @@ function Get-TargetResource
             }
             catch
             {
-                $errorMessage = $script:localizedData.EnumMemberNamesServerRoleGetError `
-                    -f $ServerName, $InstanceName, $ServerRoleName
-
-                New-InvalidOperationException -Message $errorMessage -ErrorRecord $_
+                Write-Verbose -Message ($script:localizedData.EnumMemberNamesServerRoleGetError `
+                    -f $ServerName, $InstanceName, $ServerRoleName)
             }
         }
     }
@@ -237,7 +234,7 @@ function Set-TargetResource
 
                 $correctedParameters = Get-CorrectedMemberParameters @originalParameters
 
-                if ($Members)
+                if ($PSBoundParameters.ContainsKey('Members'))
                 {
                     $memberNamesInRoleObject = $sqlServerObject.Roles[$ServerRoleName].EnumMemberNames()
 
@@ -263,7 +260,7 @@ function Set-TargetResource
                 }
                 else
                 {
-                    if ($MembersToInclude)
+                    if ($PSBoundParameters.ContainsKey('MembersToInclude'))
                     {
                         $memberNamesInRoleObject = $sqlServerObject.Roles[$ServerRoleName].EnumMemberNames()
 
@@ -278,7 +275,7 @@ function Set-TargetResource
                         }
                     }
 
-                    if ($MembersToExclude)
+                    if ($PSBoundParameters.ContainsKey('MembersToExclude'))
                     {
                         $memberNamesInRoleObject = $sqlServerObject.Roles[$ServerRoleName].EnumMemberNames()
 
@@ -428,9 +425,9 @@ function Test-TargetResource
             }
             else
             {
-                if ($Members)
+                if ($PSBoundParameters.ContainsKey('Members'))
                 {
-                    if ( $null -ne (Compare-Object -ReferenceObject $getTargetResourceResult.Members -DifferenceObject $correctedParameters.Members))
+                    if ($null -ne (Compare-Object -ReferenceObject $getTargetResourceResult.Members -DifferenceObject $correctedParameters.Members))
                     {
                         Write-Verbose -Message (
                             $script:localizedData.DesiredMembersNotPresent `
@@ -442,7 +439,7 @@ function Test-TargetResource
                 }
                 else
                 {
-                    if ($MembersToInclude)
+                    if ($PSBoundParameters.ContainsKey('MembersToInclude'))
                     {
                         foreach ($memberToInclude in $correctedParameters.MembersToInclude)
                         {
@@ -458,7 +455,7 @@ function Test-TargetResource
                         }
                     }
 
-                    if ($MembersToExclude)
+                    if ($PSBoundParameters.ContainsKey('MembersToExclude'))
                     {
                         foreach ($memberToExclude in $correctedParameters.MembersToExclude)
                         {

@@ -311,24 +311,24 @@ Describe "DSC_SqlRole\Get-TargetResource" -Tag 'Get' {
             $mockInvalidOperationForEnumMethod = $true
         }
 
-        It 'Should throw the correct error' {
+        It 'Should not throw an error and return the correct result' {
             InModuleScope -ScriptBlock {
                 Set-StrictMode -Version 1.0
 
                 $mockTestParameters.ServerRoleName = 'AdminSqlForBI'
 
-                $mockErrorMessage = $script:localizedData.EnumMemberNamesServerRoleGetError -f @(
-                    'localhost',
-                    'MSSQLSERVER',
-                    'AdminSqlForBI'
-                )
+                $result = Get-TargetResource @mockTestParameters
 
-                { Get-TargetResource @mockTestParameters } | Should -Throw -ExpectedMessage ('*' + $mockErrorMessage + '*')
+                $result.ServerName | Should -Be $mockTestParameters.ServerName
+                $result.InstanceName | Should -Be $mockTestParameters.InstanceName
+                $result.ServerRoleName | Should -Be $mockTestParameters.ServerRoleName
+                $result.Ensure | Should -Be 'Absent'
+                $result.Members | Should -BeNullOrEmpty
+                $result.MembersToInclude | Should -BeNullOrEmpty
+                $result.MembersToExclude | Should -BeNullOrEmpty
             }
-        }
 
-        It 'Should call the mock function Connect-SQL' {
-            Should -Invoke -CommandName Connect-SQL -Exactly -Times 1 -Scope Context
+            Should -Invoke -CommandName Connect-SQL -Exactly -Times 1 -Scope It
         }
     }
 }
